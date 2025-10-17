@@ -632,6 +632,7 @@
         <ul>
             <li id="writePostLink" style="display: none;"><a href="#" onclick="openAddPostModal()">✍️ 写新文章</a></li>
             <li><a href="#" onclick="exportBlog()">📥 导出博客</a></li>
+            <li id="importPostLink" style="display: none;"><a href="#" onclick="importBlog()">📤 导入博客</a></li>
             <li><a href="#" onclick="toggleTheme()">🌙 切换主题</a></li>
         </ul>
     </div>
@@ -708,8 +709,8 @@
     </div>
     
     <script>
-        // 博客数据存储
-        let blogPosts = [
+        // 博客数据存储 - 从localStorage加载
+        let blogPosts = loadBlogPosts() || [
             {
                 id: 1,
                 title: "欢迎来到我的博客！",
@@ -824,6 +825,25 @@ function example() {
         let floatingEnabled = true;
         let isLoggedIn = false;
         
+        // 数据持久化函数
+        function saveBlogPosts() {
+            try {
+                localStorage.setItem('blogPosts', JSON.stringify(blogPosts));
+            } catch (e) {
+                console.error('保存博客数据失败:', e);
+            }
+        }
+        
+        function loadBlogPosts() {
+            try {
+                const saved = localStorage.getItem('blogPosts');
+                return saved ? JSON.parse(saved) : null;
+            } catch (e) {
+                console.error('加载博客数据失败:', e);
+                return null;
+            }
+        }
+        
         function createFloatingElement() {
             if (!floatingEnabled) return;
             
@@ -851,6 +871,7 @@ function example() {
         function toggleLogin() {
             const loginBtn = document.getElementById('loginBtn');
             const writePostLink = document.getElementById('writePostLink');
+            const importPostLink = document.getElementById('importPostLink');
             const addPostBtn = document.querySelector('.add-post-btn');
             
             if (!isLoggedIn) {
@@ -861,6 +882,7 @@ function example() {
                     loginBtn.textContent = '👤 已登录';
                     loginBtn.style.background = 'rgba(46, 204, 113, 0.3)';
                     writePostLink.style.display = 'block';
+                    importPostLink.style.display = 'block';
                     addPostBtn.style.display = 'block';
                     // 重新渲染页面以显示编辑/删除按钮
                     renderPosts();
@@ -873,6 +895,7 @@ function example() {
                 loginBtn.textContent = '🔐 登录';
                 loginBtn.style.background = 'rgba(255, 255, 255, 0.2)';
                 writePostLink.style.display = 'none';
+                importPostLink.style.display = 'none';
                 addPostBtn.style.display = 'none';
                 // 重新渲染页面以隐藏编辑/删除按钮
                 renderPosts();
@@ -949,13 +972,20 @@ function example() {
         // 更新侧边栏文章列表
         function updatePostList() {
             const postList = document.getElementById('postList');
-            const postsHtml = blogPosts.map(post => 
+            const recentPosts = blogPosts.slice(0, 5); // 只显示最新5篇
+            const hasMorePosts = blogPosts.length > 5;
+            
+            const postsHtml = recentPosts.map(post => 
                 `<li><a href="#" onclick="showPost(${post.id})">📄 ${post.title}</a></li>`
             ).join('');
+            
+            const morePostsHtml = hasMorePosts ? 
+                `<li><a href="#" onclick="loadAllPosts()" style="color: #667eea; font-style: italic;">... 查看全部 ${blogPosts.length} 篇文章</a></li>` : '';
             
             postList.innerHTML = `
                 <li><a href="#" onclick="loadAllPosts()">🏠 全部文章</a></li>
                 ${postsHtml}
+                ${morePostsHtml}
             `;
         }
         
@@ -1018,9 +1048,11 @@ function example() {
                 };
                 
                 blogPosts.unshift(newPost);
-                alert('文章发布成功！\\n\\n提示：在实际使用中，这里会自动保存到GitHub仓库。');
+                alert('文章发布成功！');
             }
             
+            // 保存到本地存储
+            saveBlogPosts();
             renderPosts();
             closeAddPostModal();
         });
@@ -1067,6 +1099,9 @@ function example() {
             document.getElementById(`name-${postId}`).value = '';
             document.getElementById(`email-${postId}`).value = '';
             
+            // 保存到本地存储
+            saveBlogPosts();
+            
             // 重新渲染
             renderPosts();
             
@@ -1079,6 +1114,7 @@ function example() {
             const post = blogPosts.find(p => p.id === postId);
             if (post.comments) {
                 post.comments = post.comments.filter(c => c.id !== commentId);
+                saveBlogPosts();
                 renderPosts();
                 alert('评论已删除！');
             }
@@ -1107,6 +1143,7 @@ function example() {
             const index = blogPosts.findIndex(p => p.id === postId);
             if (index !== -1) {
                 blogPosts.splice(index, 1);
+                saveBlogPosts();
                 renderPosts();
                 alert('文章已删除！');
             }
@@ -1233,9 +1270,46 @@ function example() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'blog-posts.json';
+            a.download = `blog-backup-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            alert('博客数据已导出！建议定期备份。');
+        }
+        
+        function importBlog() {
+            if (!isLoggedIn) {
+                alert('请先登录再导入数据！');
+                return;
+            }
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const importedData = JSON.parse(e.target.result);
+                            if (Array.isArray(importedData)) {
+                                if (confirm('导入数据将覆盖现有数据，确定继续吗？')) {
+                                    blogPosts = importedData;
+                                    saveBlogPosts();
+                                    renderPosts();
+                                    alert('数据导入成功！');
+                                }
+                            } else {
+                                alert('文件格式不正确！');
+                            }
+                        } catch (err) {
+                            alert('文件解析失败！请检查文件格式。');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
         }
         
         function toggleTheme() {
