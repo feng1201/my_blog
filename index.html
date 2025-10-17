@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的个人博客</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,226 +16,742 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
         
+        /* 可爱的飘动元素 */
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .floating-item {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.6;
+            animation: float-across 15s linear infinite;
+        }
+        
+        @keyframes float-across {
+            0% {
+                transform: translateX(100vw) translateY(-50px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateX(-100px) translateY(50px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 主容器 */
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
+            position: relative;
+            z-index: 10;
         }
         
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 5;
+        }
+        
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+        }
+        
+        .sidebar li {
+            margin-bottom: 8px;
+        }
+        
+        .sidebar a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        
+        .sidebar a:hover {
+            color: #764ba2;
+        }
+        
+        /* 右侧工具栏 */
+        .toolbar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            z-index: 5;
+        }
+        
+        .tool-btn {
+            display: block;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tool-btn:hover {
+            transform: scale(1.1);
+            background: #667eea;
+            color: white;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 240px;
+            margin-right: 100px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* 头部 */
         header {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 3rem 2rem;
             text-align: center;
+            position: relative;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23FFF" stop-opacity="1"/><stop offset="100%" stop-color="%23FFF" stop-opacity="0"/></radialGradient></defs><circle cx="10" cy="10" r="10" fill="url(%23a)"/></svg>') repeat;
+            opacity: 0.1;
         }
         
         h1 {
-            color: #2c3e50;
+            font-size: 2.5rem;
             margin-bottom: 0.5rem;
+            position: relative;
         }
         
         .subtitle {
-            color: #7f8c8d;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
         }
         
-        .post {
-            background: white;
+        /* 博客列表 */
+        .blog-list {
             padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
             margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         }
         
         .post-title {
             color: #2c3e50;
             margin-bottom: 1rem;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 0.5rem;
+            font-size: 1.5rem;
         }
         
         .post-meta {
             color: #7f8c8d;
             font-size: 0.9rem;
             margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
         }
         
         .post-content {
             line-height: 1.8;
         }
         
-        .post-content p {
-            margin-bottom: 1rem;
-        }
-        
-        .post-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            margin: 1rem 0;
+        .post-content h3 {
+            color: #667eea;
+            margin: 1.5rem 0 1rem 0;
         }
         
         .post-content table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
         .post-content th,
         .post-content td {
-            border: 1px solid #ddd;
-            padding: 0.5rem;
+            padding: 12px;
             text-align: left;
+            border-bottom: 1px solid #eee;
         }
         
         .post-content th {
-            background-color: #f8f9fa;
-            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
         }
         
-        .edit-info {
-            background: #e8f4f8;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 2rem;
-            border-left: 4px solid #3498db;
+        .post-content tr:hover {
+            background-color: #f8f9ff;
         }
         
-        .edit-info h3 {
+        /* 新增博客按钮 */
+        .add-post-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 20;
+        }
+        
+        .add-post-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal h2 {
             color: #2c3e50;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
         
-        .edit-info p {
-            margin-bottom: 0.5rem;
+        .form-group {
+            margin-bottom: 1rem;
         }
         
-        .edit-info code {
-            background: #f1f2f6;
-            padding: 0.2rem 0.4rem;
-            border-radius: 3px;
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            height: 200px;
+            resize: vertical;
             font-family: 'Courier New', monospace;
         }
         
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #7f8c8d;
-        }
-        
-        .translate-btn {
-            background: #3498db;
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
             cursor: pointer;
-            margin: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin-right: 1rem;
         }
         
-        .translate-btn:hover {
-            background: #2980b9;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 20px;
+                margin-right: 80px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+            
+            .toolbar {
+                display: none;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #667eea;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- 飘动元素 -->
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <h3>📚 博客导航</h3>
+        <ul id="postList">
+            <li><a href="#" onclick="loadAllPosts()">🏠 全部文章</a></li>
+        </ul>
+        
+        <h3 style="margin-top: 2rem;">🛠️ 工具</h3>
+        <ul>
+            <li><a href="#" onclick="openAddPostModal()">✍️ 写新文章</a></li>
+            <li><a href="#" onclick="exportBlog()">📥 导出博客</a></li>
+            <li><a href="#" onclick="toggleTheme()">🌙 切换主题</a></li>
+        </ul>
+    </div>
+    
+    <!-- 右侧工具栏 -->
+    <div class="toolbar">
+        <button class="tool-btn" onclick="translatePage()" title="翻译">🌐</button>
+        <button class="tool-btn" onclick="scrollToTop()" title="回到顶部">⬆️</button>
+        <button class="tool-btn" onclick="toggleFloating()" title="切换动效">✨</button>
+    </div>
+    
     <div class="container">
-        <header>
-            <h1>我的个人博客</h1>
-            <p class="subtitle">记录生活，分享思考</p>
-            <button class="translate-btn" onclick="translatePage()">🌐 翻译</button>
-        </header>
-        
-        <div class="edit-info">
-            <h3>📝 如何编辑这个博客？</h3>
-            <p>1. 在GitHub上编辑 <code>index.html</code> 文件</p>
-            <p>2. 直接修改下面的博客内容</p>
-            <p>3. 提交更改，网站会自动更新</p>
-            <p>4. 支持HTML格式，可以添加图片、表格等</p>
+        <div class="main-content">
+            <header>
+                <h1>我的个人博客</h1>
+                <p class="subtitle">记录生活，分享思考 ✨</p>
+            </header>
+            
+            <div class="blog-list" id="blogContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载博客内容...</p>
+                </div>
+            </div>
         </div>
-        
-        <article class="post">
-            <h2 class="post-title">欢迎来到我的博客！</h2>
-            <div class="post-meta">发布时间: 2025年10月17日</div>
-            <div class="post-content">
-                <p>这是我的第一篇博客文章。你可以直接在GitHub上编辑这个文件来更新内容。</p>
+    </div>
+    
+    <!-- 添加文章按钮 -->
+    <button class="add-post-btn" onclick="openAddPostModal()" title="写新文章">+</button>
+    
+    <!-- 添加文章模态框 -->
+    <div class="modal" id="addPostModal">
+        <div class="modal-content">
+            <h2>✍️ 写新文章</h2>
+            <form id="addPostForm">
+                <div class="form-group">
+                    <label for="postTitle">文章标题</label>
+                    <input type="text" id="postTitle" placeholder="输入文章标题..." required>
+                </div>
                 
-                <h3>支持的功能：</h3>
-                <ul>
-                    <li>✅ 文字格式化</li>
-                    <li>✅ 图片插入</li>
-                    <li>✅ 表格支持</li>
-                    <li>✅ 在线翻译</li>
-                </ul>
+                <div class="form-group">
+                    <label for="postTags">标签 (用逗号分隔)</label>
+                    <input type="text" id="postTags" placeholder="技术, 生活, 思考...">
+                </div>
                 
-                <h3>示例表格：</h3>
-                <table>
-                    <tr>
-                        <th>日期</th>
-                        <th>事件</th>
-                        <th>备注</th>
-                    </tr>
-                    <tr>
-                        <td>2025-10-17</td>
-                        <td>博客创建</td>
-                        <td>第一个版本</td>
-                    </tr>
-                    <tr>
-                        <td>待更新</td>
-                        <td>添加新文章</td>
-                        <td>持续更新中</td>
-                    </tr>
-                </table>
-            </div>
-        </article>
-        
-        <article class="post">
-            <h2 class="post-title">如何添加新文章？</h2>
-            <div class="post-meta">更新时间: 2025年10月17日</div>
-            <div class="post-content">
-                <p>要添加新的博客文章，只需要：</p>
+                <div class="form-group">
+                    <label for="postContent">文章内容 (支持Markdown)</label>
+                    <textarea id="postContent" placeholder="# 标题
+
+这里写你的文章内容...
+
+## 子标题
+
+- 列表项1
+- 列表项2
+
+| 表格列1 | 表格列2 |
+|---------|---------|
+| 内容1   | 内容2   |
+
+**粗体文字** *斜体文字*
+
+[链接文字](https://example.com)" required></textarea>
+                </div>
                 
-                <ol>
-                    <li>复制现有的 <code>&lt;article class="post"&gt;</code> 块</li>
-                    <li>修改标题、日期和内容</li>
-                    <li>保存文件并提交到GitHub</li>
-                </ol>
-                
-                <p>你可以使用以下HTML标签：</p>
-                <ul>
-                    <li><code>&lt;h3&gt;</code> - 小标题</li>
-                    <li><code>&lt;p&gt;</code> - 段落</li>
-                    <li><code>&lt;img src="图片链接"&gt;</code> - 图片</li>
-                    <li><code>&lt;table&gt;</code> - 表格</li>
-                    <li><code>&lt;ul&gt;&lt;li&gt;</code> - 列表</li>
-                </ul>
-            </div>
-        </article>
-        
-        <footer>
-            <p>&copy; 2025 我的个人博客 | 基于GitHub Pages构建</p>
-        </footer>
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddPostModal()">取消</button>
+                    <button type="submit" class="btn">发布文章</button>
+                </div>
+            </form>
+        </div>
     </div>
     
     <script>
-        function translatePage() {
-            // 简单的翻译功能 - 使用Google Translate
-            const currentLang = document.documentElement.lang;
-            if (currentLang === 'zh-CN') {
-                window.open('https://translate.google.com/translate?sl=zh&tl=en&u=' + encodeURIComponent(window.location.href), '_blank');
-            } else {
-                window.open('https://translate.google.com/translate?sl=en&tl=zh&u=' + encodeURIComponent(window.location.href), '_blank');
+        // 博客数据存储
+        let blogPosts = [
+            {
+                id: 1,
+                title: "欢迎来到我的博客！",
+                date: "2025-10-17",
+                tags: ["欢迎", "介绍"],
+                content: `# 欢迎来到我的博客！
+
+这是我的第一篇博客文章。这个博客系统有以下特色功能：
+
+## ✨ 主要特性
+
+- **Markdown支持**: 使用Markdown语法写作，简单高效
+- **可爱动效**: 页面有飘动的小元素增加趣味性
+- **响应式设计**: 在各种设备上都能完美显示
+- **实时预览**: 支持实时编辑和预览
+- **标签系统**: 方便文章分类和查找
+
+## 📝 如何使用
+
+1. 点击右下角的 **+** 按钮写新文章
+2. 使用Markdown语法编写内容
+3. 添加合适的标签
+4. 点击发布即可
+
+## 🎯 Markdown示例
+
+### 表格
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 文字编辑 | ✅ | 支持富文本 |
+| 图片插入 | ✅ | 支持本地和网络图片 |
+| 表格 | ✅ | 完美支持 |
+| 代码高亮 | ✅ | 多语言支持 |
+
+### 代码块
+\`\`\`javascript
+function sayHello() {
+    console.log("Hello, World!");
+}
+\`\`\`
+
+**开始你的博客之旅吧！** 🚀`
+            },
+            {
+                id: 2,
+                title: "Markdown语法指南",
+                date: "2025-10-17",
+                tags: ["教程", "Markdown"],
+                content: `# Markdown语法指南
+
+这篇文章将教你如何使用Markdown语法来写博客。
+
+## 基础语法
+
+### 标题
+使用 # 来创建标题，# 的数量表示标题级别：
+
+\`\`\`
+# 一级标题
+## 二级标题
+### 三级标题
+\`\`\`
+
+### 文字格式
+- **粗体文字**：使用 \`**文字**\`
+- *斜体文字*：使用 \`*文字*\`
+- ~~删除线~~：使用 \`~~文字~~\`
+
+### 列表
+无序列表：
+- 项目1
+- 项目2
+- 项目3
+
+有序列表：
+1. 第一项
+2. 第二项
+3. 第三项
+
+### 链接和图片
+- 链接：\`[链接文字](URL)\`
+- 图片：\`![图片描述](图片URL)\`
+
+### 表格
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| 内容1 | 内容2 | 内容3 |
+| 内容4 | 内容5 | 内容6 |
+
+### 代码
+行内代码：\`console.log("Hello")\`
+
+代码块：
+\`\`\`javascript
+function example() {
+    return "这是一个代码块";
+}
+\`\`\`
+
+现在你可以开始用Markdown写博客了！`
+            }
+        ];
+        
+        // 飘动元素
+        const floatingSymbols = ['🌸', '🦋', '⭐', '🌙', '☁️', '🌈', '✨', '🎈', '🎀', '🌺'];
+        let floatingEnabled = true;
+        
+        function createFloatingElement() {
+            if (!floatingEnabled) return;
+            
+            const element = document.createElement('div');
+            element.className = 'floating-item';
+            element.textContent = floatingSymbols[Math.floor(Math.random() * floatingSymbols.length)];
+            element.style.top = Math.random() * 100 + 'vh';
+            element.style.animationDelay = Math.random() * 2 + 's';
+            element.style.animationDuration = (10 + Math.random() * 10) + 's';
+            
+            document.getElementById('floatingElements').appendChild(element);
+            
+            setTimeout(() => {
+                element.remove();
+            }, 20000);
+        }
+        
+        // 定期创建飘动元素
+        setInterval(createFloatingElement, 3000);
+        
+        // 渲染博客文章
+        function renderPosts(posts = blogPosts) {
+            const blogContent = document.getElementById('blogContent');
+            
+            if (posts.length === 0) {
+                blogContent.innerHTML = '<div class="post-card"><h2>暂无文章</h2><p>点击右下角的 + 按钮开始写你的第一篇文章吧！</p></div>';
+                return;
+            }
+            
+            const postsHtml = posts.map(post => `
+                <article class="post-card">
+                    <h2 class="post-title">${post.title}</h2>
+                    <div class="post-meta">
+                        <span>📅 ${post.date}</span>
+                        <span>🏷️ ${post.tags.join(', ')}</span>
+                    </div>
+                    <div class="post-content">
+                        ${marked.parse(post.content)}
+                    </div>
+                </article>
+            `).join('');
+            
+            blogContent.innerHTML = postsHtml;
+            updatePostList();
+        }
+        
+        // 更新侧边栏文章列表
+        function updatePostList() {
+            const postList = document.getElementById('postList');
+            const postsHtml = blogPosts.map(post => 
+                `<li><a href="#" onclick="showPost(${post.id})">📄 ${post.title}</a></li>`
+            ).join('');
+            
+            postList.innerHTML = `
+                <li><a href="#" onclick="loadAllPosts()">🏠 全部文章</a></li>
+                ${postsHtml}
+            `;
+        }
+        
+        // 显示单篇文章
+        function showPost(id) {
+            const post = blogPosts.find(p => p.id === id);
+            if (post) {
+                renderPosts([post]);
             }
         }
         
-        // 简单的实时编辑功能（仅演示）
+        // 显示所有文章
+        function loadAllPosts() {
+            renderPosts();
+        }
+        
+        // 打开添加文章模态框
+        function openAddPostModal() {
+            document.getElementById('addPostModal').style.display = 'block';
+        }
+        
+        // 关闭添加文章模态框
+        function closeAddPostModal() {
+            document.getElementById('addPostModal').style.display = 'none';
+            document.getElementById('addPostForm').reset();
+        }
+        
+        // 处理表单提交
+        document.getElementById('addPostForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('postTitle').value;
+            const tags = document.getElementById('postTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const content = document.getElementById('postContent').value;
+            
+            const newPost = {
+                id: Date.now(),
+                title: title,
+                date: new Date().toISOString().split('T')[0],
+                tags: tags.length > 0 ? tags : ['未分类'],
+                content: content
+            };
+            
+            blogPosts.unshift(newPost);
+            renderPosts();
+            closeAddPostModal();
+            
+            // 这里可以添加保存到GitHub的逻辑
+            alert('文章发布成功！\\n\\n提示：在实际使用中，这里会自动保存到GitHub仓库。');
+        });
+        
+        // 工具函数
+        function translatePage() {
+            window.open('https://translate.google.com/translate?sl=zh&tl=en&u=' + encodeURIComponent(window.location.href), '_blank');
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function toggleFloating() {
+            floatingEnabled = !floatingEnabled;
+            if (!floatingEnabled) {
+                document.getElementById('floatingElements').innerHTML = '';
+            }
+        }
+        
+        function exportBlog() {
+            const data = JSON.stringify(blogPosts, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'blog-posts.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function toggleTheme() {
+            // 这里可以实现主题切换功能
+            alert('主题切换功能开发中...');
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('addPostModal');
+            if (event.target === modal) {
+                closeAddPostModal();
+            }
+        }
+        
+        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('博客加载完成！可以在GitHub上编辑内容。');
+            renderPosts();
         });
     </script>
 </body>
