@@ -148,9 +148,9 @@
         
         /* 主内容区 */
         .main-content {
-            margin-left: 240px;
-            margin-right: 100px;
-            max-width: 1200px;
+            margin-left: 260px;
+            margin-right: 80px;
+            max-width: none;
             width: calc(100% - 340px);
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -261,7 +261,45 @@
             font-size: 0.9rem;
             margin-bottom: 1rem;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .post-meta-left {
+            display: flex;
             gap: 1rem;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            background: none;
+            border: 1px solid #ddd;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .action-btn.edit:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #2196f3;
+        }
+        
+        .action-btn.delete:hover {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #f44336;
         }
         
         .post-content {
@@ -318,11 +356,45 @@
             font-weight: 600;
         }
         
+        .comment-toggle-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+        
+        .comment-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
         .comment-form {
             background: #f8f9ff;
             padding: 1.5rem;
             border-radius: 10px;
             margin-bottom: 2rem;
+            display: none;
+        }
+        
+        .comment-form.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .comment-form textarea {
@@ -806,36 +878,50 @@ function example() {
             
             const postsHtml = posts.map(post => `
                 <article class="post-card">
-                    <h2 class="post-title">${post.title}</h2>
+                    <h2 class="post-title translatable">${post.title}</h2>
                     <div class="post-meta">
-                        <span>📅 ${post.date}</span>
-                        <span>🏷️ ${post.tags.join(', ')}</span>
+                        <div class="post-meta-left">
+                            <span class="translatable">📅 ${post.date}</span>
+                            <span class="translatable">🏷️ ${post.tags.join(', ')}</span>
+                        </div>
+                        ${isLoggedIn ? `
+                        <div class="post-actions">
+                            <button class="action-btn edit" onclick="editPost(${post.id})">✏️ 编辑</button>
+                            <button class="action-btn delete" onclick="deletePost(${post.id})">🗑️ 删除</button>
+                        </div>
+                        ` : ''}
                     </div>
-                    <div class="post-content">
+                    <div class="post-content translatable">
                         ${marked.parse(post.content)}
                     </div>
                     <div class="comments-section">
                         <div class="comments-header">
-                            <span class="comments-count">💬 评论 (${post.comments ? post.comments.length : 0})</span>
+                            <span class="comments-count translatable">💬 评论 (${post.comments ? post.comments.length : 0})</span>
                         </div>
-                        <div class="comment-form">
-                            <textarea placeholder="写下你的评论..." id="comment-${post.id}"></textarea>
+                        <button class="comment-toggle-btn translatable" onclick="toggleCommentForm(${post.id})">
+                            💬 写评论
+                        </button>
+                        <div class="comment-form" id="comment-form-${post.id}">
+                            <textarea placeholder="写下你的评论..." id="comment-${post.id}" class="translatable"></textarea>
                             <div class="comment-form-footer">
                                 <div>
-                                    <input type="text" placeholder="昵称" id="name-${post.id}" style="width: 120px;">
-                                    <input type="email" placeholder="邮箱（可选）" id="email-${post.id}" style="width: 150px;">
+                                    <input type="text" placeholder="昵称（可选）" id="name-${post.id}" style="width: 120px;" class="translatable">
+                                    <input type="email" placeholder="邮箱（可选）" id="email-${post.id}" style="width: 150px;" class="translatable">
                                 </div>
-                                <button class="btn" onclick="addComment(${post.id})">发表评论</button>
+                                <button class="btn translatable" onclick="addComment(${post.id})">发表评论</button>
                             </div>
                         </div>
                         <div id="comments-${post.id}">
                             ${post.comments ? post.comments.map(comment => `
                                 <div class="comment-item">
                                     <div class="comment-author">
-                                        ${comment.author}
+                                        <span class="translatable">${comment.author}</span>
                                         <span class="comment-time">${comment.time}</span>
+                                        ${isLoggedIn ? `
+                                        <button class="action-btn delete" onclick="deleteComment(${post.id}, ${comment.id})" style="margin-left: 10px; font-size: 10px;">删除</button>
+                                        ` : ''}
                                     </div>
-                                    <div class="comment-content">${comment.content}</div>
+                                    <div class="comment-content translatable">${comment.content}</div>
                                 </div>
                             `).join('') : ''}
                         </div>
@@ -891,24 +977,55 @@ function example() {
             const title = document.getElementById('postTitle').value;
             const tags = document.getElementById('postTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
             const content = document.getElementById('postContent').value;
+            const editingId = this.getAttribute('data-editing');
             
-            const newPost = {
-                id: Date.now(),
-                title: title,
-                date: new Date().toISOString().split('T')[0],
-                tags: tags.length > 0 ? tags : ['未分类'],
-                content: content
-            };
+            if (editingId) {
+                // 编辑模式
+                const post = blogPosts.find(p => p.id == editingId);
+                if (post) {
+                    post.title = title;
+                    post.tags = tags.length > 0 ? tags : ['未分类'];
+                    post.content = content;
+                    post.date = new Date().toISOString().split('T')[0]; // 更新日期
+                }
+                
+                // 清除编辑模式
+                this.removeAttribute('data-editing');
+                document.querySelector('#addPostModal h2').textContent = '✍️ 写新文章';
+                
+                alert('文章更新成功！');
+            } else {
+                // 新建模式
+                const newPost = {
+                    id: Date.now(),
+                    title: title,
+                    date: new Date().toISOString().split('T')[0],
+                    tags: tags.length > 0 ? tags : ['未分类'],
+                    content: content
+                };
+                
+                blogPosts.unshift(newPost);
+                alert('文章发布成功！\\n\\n提示：在实际使用中，这里会自动保存到GitHub仓库。');
+            }
             
-            blogPosts.unshift(newPost);
             renderPosts();
             closeAddPostModal();
-            
-            // 这里可以添加保存到GitHub的逻辑
-            alert('文章发布成功！\\n\\n提示：在实际使用中，这里会自动保存到GitHub仓库。');
         });
         
         // 评论功能
+        function toggleCommentForm(postId) {
+            const form = document.getElementById(`comment-form-${postId}`);
+            const btn = form.previousElementSibling;
+            
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+                btn.textContent = '💬 写评论';
+            } else {
+                form.classList.add('active');
+                btn.textContent = '❌ 取消评论';
+            }
+        }
+        
         function addComment(postId) {
             const commentText = document.getElementById(`comment-${postId}`).value.trim();
             const authorName = document.getElementById(`name-${postId}`).value.trim() || '匿名用户';
@@ -932,7 +1049,7 @@ function example() {
             
             post.comments.push(newComment);
             
-            // 清空表单
+            // 清空表单并隐藏
             document.getElementById(`comment-${postId}`).value = '';
             document.getElementById(`name-${postId}`).value = '';
             document.getElementById(`email-${postId}`).value = '';
@@ -943,11 +1060,50 @@ function example() {
             alert('评论发表成功！');
         }
         
+        function deleteComment(postId, commentId) {
+            if (!confirm('确定要删除这条评论吗？')) return;
+            
+            const post = blogPosts.find(p => p.id === postId);
+            if (post.comments) {
+                post.comments = post.comments.filter(c => c.id !== commentId);
+                renderPosts();
+                alert('评论已删除！');
+            }
+        }
+        
+        // 博客编辑/删除功能
+        function editPost(postId) {
+            const post = blogPosts.find(p => p.id === postId);
+            if (!post) return;
+            
+            // 填充编辑表单
+            document.getElementById('postTitle').value = post.title;
+            document.getElementById('postTags').value = post.tags.join(', ');
+            document.getElementById('postContent').value = post.content;
+            
+            // 标记为编辑模式
+            document.getElementById('addPostForm').setAttribute('data-editing', postId);
+            document.querySelector('#addPostModal h2').textContent = '✏️ 编辑文章';
+            
+            openAddPostModal();
+        }
+        
+        function deletePost(postId) {
+            if (!confirm('确定要删除这篇文章吗？此操作不可恢复！')) return;
+            
+            const index = blogPosts.findIndex(p => p.id === postId);
+            if (index !== -1) {
+                blogPosts.splice(index, 1);
+                renderPosts();
+                alert('文章已删除！');
+            }
+        }
+        
         // 工具函数
         let isTranslated = false;
         
         function translatePage() {
-            const elements = document.querySelectorAll('h1, h2, h3, p, span, button, a, label, textarea, input[placeholder]');
+            const elements = document.querySelectorAll('.translatable, h1, h2, h3, p, span, button, a, label, textarea, input[placeholder]');
             
             if (!isTranslated) {
                 // 翻译为英文
@@ -955,9 +1111,16 @@ function example() {
                     if (el.tagName === 'INPUT' && el.placeholder) {
                         el.setAttribute('data-original-placeholder', el.placeholder);
                         el.placeholder = translateText(el.placeholder);
+                    } else if (el.tagName === 'TEXTAREA' && el.placeholder) {
+                        el.setAttribute('data-original-placeholder', el.placeholder);
+                        el.placeholder = translateText(el.placeholder);
                     } else if (el.textContent && !el.querySelector('*')) {
                         el.setAttribute('data-original-text', el.textContent);
                         el.textContent = translateText(el.textContent);
+                    } else if (el.innerHTML && el.classList.contains('translatable')) {
+                        // 处理包含HTML的内容
+                        el.setAttribute('data-original-html', el.innerHTML);
+                        el.innerHTML = translateHTML(el.innerHTML);
                     }
                 });
                 document.querySelector('.translate-header-btn').textContent = '🌐 翻译为中文';
@@ -967,8 +1130,12 @@ function example() {
                 elements.forEach(el => {
                     if (el.tagName === 'INPUT' && el.getAttribute('data-original-placeholder')) {
                         el.placeholder = el.getAttribute('data-original-placeholder');
+                    } else if (el.tagName === 'TEXTAREA' && el.getAttribute('data-original-placeholder')) {
+                        el.placeholder = el.getAttribute('data-original-placeholder');
                     } else if (el.getAttribute('data-original-text')) {
                         el.textContent = el.getAttribute('data-original-text');
+                    } else if (el.getAttribute('data-original-html')) {
+                        el.innerHTML = el.getAttribute('data-original-html');
                     }
                 });
                 document.querySelector('.translate-header-btn').textContent = '🌐 Translate to English';
@@ -976,8 +1143,21 @@ function example() {
             }
         }
         
-        function translateText(text) {
-            const translations = {
+        function translateHTML(html) {
+            // 简单的HTML内容翻译
+            let translated = html;
+            const translations = getTranslations();
+            
+            Object.keys(translations).forEach(chinese => {
+                const regex = new RegExp(chinese, 'g');
+                translated = translated.replace(regex, translations[chinese]);
+            });
+            
+            return translated;
+        }
+        
+        function getTranslations() {
+            return {
                 '我的个人博客': 'My Personal Blog',
                 '记录生活，分享思考': 'Recording Life, Sharing Thoughts',
                 '博客导航': 'Blog Navigation',
@@ -991,16 +1171,35 @@ function example() {
                 '欢迎来到我的博客！': 'Welcome to My Blog!',
                 '发布时间': 'Published',
                 '评论': 'Comments',
+                '写评论': 'Write Comment',
+                '取消评论': 'Cancel Comment',
                 '写下你的评论...': 'Write your comment...',
-                '昵称': 'Nickname',
+                '昵称（可选）': 'Nickname (Optional)',
                 '邮箱（可选）': 'Email (Optional)',
                 '发表评论': 'Post Comment',
                 '匿名用户': 'Anonymous User',
                 '翻译': 'Translate',
                 '回到顶部': 'Back to Top',
-                '切换动效': 'Toggle Effects'
+                '切换动效': 'Toggle Effects',
+                '编辑': 'Edit',
+                '删除': 'Delete',
+                '这是我的第一篇博客文章': 'This is my first blog post',
+                '支持的功能': 'Supported Features',
+                '主要特性': 'Main Features',
+                '如何使用': 'How to Use',
+                '开始你的博客之旅吧！': 'Start your blogging journey!',
+                '基础语法': 'Basic Syntax',
+                '标题': 'Headings',
+                '文字格式': 'Text Formatting',
+                '列表': 'Lists',
+                '链接和图片': 'Links and Images',
+                '表格': 'Tables',
+                '代码': 'Code'
             };
-            
+        }
+        
+        function translateText(text) {
+            const translations = getTranslations();
             return translations[text] || text;
         }
         
