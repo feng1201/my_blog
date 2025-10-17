@@ -833,6 +833,12 @@ function example() {
             branch: 'main'
         };
         
+        // 服务器API配置
+        const SERVER_CONFIG = {
+            baseUrl: 'http://localhost:5000/api',  // 本地服务器
+            // baseUrl: 'http://你的服务器IP:5000/api',  // 生产环境时修改
+        };
+        
         // 数据持久化函数
         function saveBlogPosts() {
             try {
@@ -876,7 +882,7 @@ function example() {
                     sha = fileData.sha;
                 }
                 
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(blogPosts, null, 2))));
+                const content = btoa(JSON.stringify(blogPosts, null, 2));
                 
                 const commitResponse = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/posts.json`, {
                     method: 'PUT',
@@ -1218,52 +1224,137 @@ function example() {
             }
         }
         
-        function addComment(postId) {
+        async function addComment(postId) {
             const commentText = document.getElementById(`comment-${postId}`).value.trim();
             const authorName = document.getElementById(`name-${postId}`).value.trim() || '匿名用户';
+            const authorEmail = document.getElementById(`email-${postId}`).value.trim();
             
             if (!commentText) {
                 alert('请输入评论内容！');
                 return;
             }
             
-            const post = blogPosts.find(p => p.id === postId);
-            if (!post.comments) {
-                post.comments = [];
-            }
-            
-            const newComment = {
-                id: Date.now(),
-                author: authorName,
-                content: commentText,
-                time: new Date().toLocaleString('zh-CN')
-            };
-            
-            post.comments.push(newComment);
-            
-            // 清空表单并隐藏
-            document.getElementById(`comment-${postId}`).value = '';
-            document.getElementById(`name-${postId}`).value = '';
-            document.getElementById(`email-${postId}`).value = '';
-            
-            // 保存到本地存储
-            saveBlogPosts();
-            
-            // 重新渲染
-            renderPosts();
-            
-            alert('评论发表成功！');
-        }
-        
-        function deleteComment(postId, commentId) {
-            if (!confirm('确定要删除这条评论吗？')) return;
-            
-            const post = blogPosts.find(p => p.id === postId);
-            if (post.comments) {
-                post.comments = post.comments.filter(c => c.id !== commentId);
+            try {
+                showSyncStatus('正在发表评论...', 'info');
+                
+                const response = await fetch(`${SERVER_CONFIG.baseUrl}/comments/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: commentText,
+                        author: authorName,
+                        email: authorEmail
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 清空表单
+                    document.getElementById(`comment-${postId}`).value = '';
+                    document.getElementById(`name-${postId}`).value = '';
+                    document.getElementById(`email-${postId}`).value = '';
+                    
+                    // 重新加载该文章的评论
+                    await loadCommentsForPost(postId);
+                    
+                    showSyncStatus('✅ 评论发表成功！', 'success');
+                } else {
+                    throw new Error(result.message || '发表评论失败');
+                }
+                
+            } catch (error) {
+                console.error('发表评论失败:', error);
+                showSyncStatus('❌ 评论发表失败', 'error');
+                
+                // 如果服务器不可用，回退到本地模式
+                const post = blogPosts.find(p => p.id === postId);
+                if (!post.comments) {
+                    post.comments = [];
+                }
+                
+                const newComment = {
+                    id: Date.now(),
+                    author: authorName,
+                    content: commentText,
+                    time: new Date().toLocaleString('zh-CN')
+                };
+                
+                post.comments.push(newComment);
+                
+                // 清空表单
+                document.getElementById(`comment-${postId}`).value = '';
+                document.getElementById(`name-${postId}`).value = '';
+                document.getElementById(`email-${postId}`).value = '';
+                
+                // 保存到本地存储
                 saveBlogPosts();
                 renderPosts();
-                alert('评论已删除！');
+                
+                alert('服务器不可用，评论已保存到本地模式');
+            }
+        }
+        
+        async function deleteComment(postId, commentId) {
+            if (!confirm('确定要删除这条评论吗？')) return;
+            
+            try {
+                const response = await fetch(`${SERVER_CONFIG.baseUrl}/comments/${postId}/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Admin-Password': 'feng1201blog'  // 管理员密码
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadCommentsForPost(postId);
+                    showSyncStatus('✅ 评论删除成功！', 'success');
+                } else {
+                    throw new Error(result.message || '删除评论失败');
+                }
+                
+            } catch (error) {
+                console.error('删除评论失败:', error);
+                
+                // 回退到本地模式
+                const post = blogPosts.find(p => p.id === postId);
+                if (post.comments) {
+                    post.comments = post.comments.filter(c => c.id !== commentId);
+                    saveBlogPosts();
+                    renderPosts();
+                    alert('服务器不可用，评论已从本地删除');
+                }
+            }
+        }
+        
+        // 加载指定文章的评论
+        async function loadCommentsForPost(postId) {
+            try {
+                const response = await fetch(`${SERVER_CONFIG.baseUrl}/comments/${postId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 更新本地文章的评论数据
+                    const post = blogPosts.find(p => p.id === postId);
+                    if (post) {
+                        post.comments = result.comments;
+                        // 重新渲染页面
+                        renderPosts();
+                    }
+                }
+            } catch (error) {
+                console.error('加载评论失败:', error);
+            }
+        }
+        
+        // 加载所有文章的评论
+        async function loadAllComments() {
+            for (const post of blogPosts) {
+                await loadCommentsForPost(post.id);
             }
         }
         
@@ -1494,6 +1585,9 @@ function example() {
             }
             
             renderPosts();
+            
+            // 加载服务器端评论
+            await loadAllComments();
         });
     </script>
 </body>
