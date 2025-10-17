@@ -34,9 +34,20 @@
         
         .floating-item {
             position: absolute;
-            font-size: 20px;
-            opacity: 0.6;
-            animation: float-across 15s linear infinite;
+            font-size: 24px;
+            opacity: 0.7;
+            animation: float-across 12s linear infinite;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .floating-item.large {
+            font-size: 32px;
+            opacity: 0.5;
+        }
+        
+        .floating-item.small {
+            font-size: 16px;
+            opacity: 0.8;
         }
         
         @keyframes float-across {
@@ -139,6 +150,8 @@
         .main-content {
             margin-left: 240px;
             margin-right: 100px;
+            max-width: 1200px;
+            width: calc(100% - 340px);
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             backdrop-filter: blur(10px);
@@ -153,6 +166,45 @@
             padding: 3rem 2rem;
             text-align: center;
             position: relative;
+        }
+        
+        /* 登录按钮 */
+        .login-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .login-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        /* 翻译按钮 */
+        .translate-header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        
+        .translate-header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
         }
         
         header::before {
@@ -245,6 +297,86 @@
         
         .post-content tr:hover {
             background-color: #f8f9ff;
+        }
+        
+        /* 评论系统 */
+        .comments-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .comments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .comments-count {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .comment-form {
+            background: #f8f9ff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .comment-form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .comment-form input {
+            padding: 8px 12px;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+        
+        .comment-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 3px solid #667eea;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comment-time {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-left: 1rem;
+        }
+        
+        .comment-content {
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
         }
         
         /* 新增博客按钮 */
@@ -417,7 +549,7 @@
         
         <h3 style="margin-top: 2rem;">🛠️ 工具</h3>
         <ul>
-            <li><a href="#" onclick="openAddPostModal()">✍️ 写新文章</a></li>
+            <li id="writePostLink" style="display: none;"><a href="#" onclick="openAddPostModal()">✍️ 写新文章</a></li>
             <li><a href="#" onclick="exportBlog()">📥 导出博客</a></li>
             <li><a href="#" onclick="toggleTheme()">🌙 切换主题</a></li>
         </ul>
@@ -433,8 +565,10 @@
     <div class="container">
         <div class="main-content">
             <header>
+                <button class="login-btn" onclick="toggleLogin()" id="loginBtn">🔐 登录</button>
                 <h1>我的个人博客</h1>
                 <p class="subtitle">记录生活，分享思考 ✨</p>
+                <button class="translate-header-btn" onclick="translatePage()">🌐 Translate to English</button>
             </header>
             
             <div class="blog-list" id="blogContent">
@@ -447,7 +581,7 @@
     </div>
     
     <!-- 添加文章按钮 -->
-    <button class="add-post-btn" onclick="openAddPostModal()" title="写新文章">+</button>
+    <button class="add-post-btn" onclick="openAddPostModal()" title="写新文章" style="display: none;">+</button>
     
     <!-- 添加文章模态框 -->
     <div class="modal" id="addPostModal">
@@ -598,29 +732,68 @@ function example() {
             }
         ];
         
-        // 飘动元素
-        const floatingSymbols = ['🌸', '🦋', '⭐', '🌙', '☁️', '🌈', '✨', '🎈', '🎀', '🌺'];
+        // 飘动元素 - 增加更多符号
+        const floatingSymbols = [
+            '🌸', '🦋', '⭐', '🌙', '☁️', '🌈', '✨', '🎈', '🎀', '🌺',
+            '🌻', '🌷', '🌹', '🌼', '🌿', '🍀', '🌱', '🌳', '🌲', '🌴',
+            '🎵', '🎶', '🎨', '🎭', '🎪', '🎡', '🎢', '🎠', '🎯', '🎲',
+            '💫', '⭐', '🌟', '💖', '💝', '💎', '🔮', '🎊', '🎉', '🎁',
+            '🦄', '🐝', '🐞', '🦜', '🕊️', '🐬', '🐙', '🦋', '🌊', '💧'
+        ];
         let floatingEnabled = true;
+        let isLoggedIn = false;
         
         function createFloatingElement() {
             if (!floatingEnabled) return;
             
             const element = document.createElement('div');
-            element.className = 'floating-item';
+            const sizes = ['small', '', 'large'];
+            const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+            
+            element.className = `floating-item ${randomSize}`;
             element.textContent = floatingSymbols[Math.floor(Math.random() * floatingSymbols.length)];
             element.style.top = Math.random() * 100 + 'vh';
             element.style.animationDelay = Math.random() * 2 + 's';
-            element.style.animationDuration = (10 + Math.random() * 10) + 's';
+            element.style.animationDuration = (8 + Math.random() * 8) + 's';
             
             document.getElementById('floatingElements').appendChild(element);
             
             setTimeout(() => {
                 element.remove();
-            }, 20000);
+            }, 16000);
         }
         
-        // 定期创建飘动元素
-        setInterval(createFloatingElement, 3000);
+        // 定期创建飘动元素 - 增加频率
+        setInterval(createFloatingElement, 1500);
+        
+        // 登录功能
+        function toggleLogin() {
+            const loginBtn = document.getElementById('loginBtn');
+            const writePostLink = document.getElementById('writePostLink');
+            const addPostBtn = document.querySelector('.add-post-btn');
+            
+            if (!isLoggedIn) {
+                // 简单的密码验证
+                const password = prompt('请输入管理员密码：');
+                if (password === 'feng1201blog') {
+                    isLoggedIn = true;
+                    loginBtn.textContent = '👤 已登录';
+                    loginBtn.style.background = 'rgba(46, 204, 113, 0.3)';
+                    writePostLink.style.display = 'block';
+                    addPostBtn.style.display = 'block';
+                    alert('登录成功！现在可以写新文章了。');
+                } else if (password !== null) {
+                    alert('密码错误！');
+                }
+            } else {
+                isLoggedIn = false;
+                loginBtn.textContent = '🔐 登录';
+                loginBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                writePostLink.style.display = 'none';
+                addPostBtn.style.display = 'none';
+                alert('已退出登录。');
+            }
+        }
         
         // 渲染博客文章
         function renderPosts(posts = blogPosts) {
@@ -640,6 +813,32 @@ function example() {
                     </div>
                     <div class="post-content">
                         ${marked.parse(post.content)}
+                    </div>
+                    <div class="comments-section">
+                        <div class="comments-header">
+                            <span class="comments-count">💬 评论 (${post.comments ? post.comments.length : 0})</span>
+                        </div>
+                        <div class="comment-form">
+                            <textarea placeholder="写下你的评论..." id="comment-${post.id}"></textarea>
+                            <div class="comment-form-footer">
+                                <div>
+                                    <input type="text" placeholder="昵称" id="name-${post.id}" style="width: 120px;">
+                                    <input type="email" placeholder="邮箱（可选）" id="email-${post.id}" style="width: 150px;">
+                                </div>
+                                <button class="btn" onclick="addComment(${post.id})">发表评论</button>
+                            </div>
+                        </div>
+                        <div id="comments-${post.id}">
+                            ${post.comments ? post.comments.map(comment => `
+                                <div class="comment-item">
+                                    <div class="comment-author">
+                                        ${comment.author}
+                                        <span class="comment-time">${comment.time}</span>
+                                    </div>
+                                    <div class="comment-content">${comment.content}</div>
+                                </div>
+                            `).join('') : ''}
+                        </div>
                     </div>
                 </article>
             `).join('');
@@ -709,9 +908,100 @@ function example() {
             alert('文章发布成功！\\n\\n提示：在实际使用中，这里会自动保存到GitHub仓库。');
         });
         
+        // 评论功能
+        function addComment(postId) {
+            const commentText = document.getElementById(`comment-${postId}`).value.trim();
+            const authorName = document.getElementById(`name-${postId}`).value.trim() || '匿名用户';
+            
+            if (!commentText) {
+                alert('请输入评论内容！');
+                return;
+            }
+            
+            const post = blogPosts.find(p => p.id === postId);
+            if (!post.comments) {
+                post.comments = [];
+            }
+            
+            const newComment = {
+                id: Date.now(),
+                author: authorName,
+                content: commentText,
+                time: new Date().toLocaleString('zh-CN')
+            };
+            
+            post.comments.push(newComment);
+            
+            // 清空表单
+            document.getElementById(`comment-${postId}`).value = '';
+            document.getElementById(`name-${postId}`).value = '';
+            document.getElementById(`email-${postId}`).value = '';
+            
+            // 重新渲染
+            renderPosts();
+            
+            alert('评论发表成功！');
+        }
+        
         // 工具函数
+        let isTranslated = false;
+        
         function translatePage() {
-            window.open('https://translate.google.com/translate?sl=zh&tl=en&u=' + encodeURIComponent(window.location.href), '_blank');
+            const elements = document.querySelectorAll('h1, h2, h3, p, span, button, a, label, textarea, input[placeholder]');
+            
+            if (!isTranslated) {
+                // 翻译为英文
+                elements.forEach(el => {
+                    if (el.tagName === 'INPUT' && el.placeholder) {
+                        el.setAttribute('data-original-placeholder', el.placeholder);
+                        el.placeholder = translateText(el.placeholder);
+                    } else if (el.textContent && !el.querySelector('*')) {
+                        el.setAttribute('data-original-text', el.textContent);
+                        el.textContent = translateText(el.textContent);
+                    }
+                });
+                document.querySelector('.translate-header-btn').textContent = '🌐 翻译为中文';
+                isTranslated = true;
+            } else {
+                // 恢复中文
+                elements.forEach(el => {
+                    if (el.tagName === 'INPUT' && el.getAttribute('data-original-placeholder')) {
+                        el.placeholder = el.getAttribute('data-original-placeholder');
+                    } else if (el.getAttribute('data-original-text')) {
+                        el.textContent = el.getAttribute('data-original-text');
+                    }
+                });
+                document.querySelector('.translate-header-btn').textContent = '🌐 Translate to English';
+                isTranslated = false;
+            }
+        }
+        
+        function translateText(text) {
+            const translations = {
+                '我的个人博客': 'My Personal Blog',
+                '记录生活，分享思考': 'Recording Life, Sharing Thoughts',
+                '博客导航': 'Blog Navigation',
+                '全部文章': 'All Posts',
+                '工具': 'Tools',
+                '写新文章': 'Write New Post',
+                '导出博客': 'Export Blog',
+                '切换主题': 'Switch Theme',
+                '登录': 'Login',
+                '已登录': 'Logged In',
+                '欢迎来到我的博客！': 'Welcome to My Blog!',
+                '发布时间': 'Published',
+                '评论': 'Comments',
+                '写下你的评论...': 'Write your comment...',
+                '昵称': 'Nickname',
+                '邮箱（可选）': 'Email (Optional)',
+                '发表评论': 'Post Comment',
+                '匿名用户': 'Anonymous User',
+                '翻译': 'Translate',
+                '回到顶部': 'Back to Top',
+                '切换动效': 'Toggle Effects'
+            };
+            
+            return translations[text] || text;
         }
         
         function scrollToTop() {
