@@ -52,26 +52,26 @@
         
         @keyframes float-across {
             0% {
-                transform: translateX(100vw) translateY(-50px) rotate(0deg);
+                transform: translateX(100vw) translateY(0px) rotate(0deg);
                 opacity: 0;
             }
-            10% {
-                opacity: 0.6;
+            5% {
+                opacity: 0.7;
             }
-            90% {
-                opacity: 0.6;
+            95% {
+                opacity: 0.7;
             }
             100% {
-                transform: translateX(-100px) translateY(50px) rotate(360deg);
+                transform: translateX(-50px) translateY(30px) rotate(360deg);
                 opacity: 0;
             }
         }
         
         /* 主容器 */
         .container {
-            max-width: 1000px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             position: relative;
             z-index: 10;
         }
@@ -148,10 +148,10 @@
         
         /* 主内容区 */
         .main-content {
-            margin-left: 260px;
-            margin-right: 80px;
+            margin-left: 240px;
+            margin-right: 60px;
             max-width: none;
-            width: calc(100% - 340px);
+            width: calc(100% - 300px);
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             backdrop-filter: blur(10px);
@@ -492,10 +492,10 @@
             transform: translate(-50%, -50%);
             background: white;
             border-radius: 15px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
+            padding: 2.5rem;
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
             overflow-y: auto;
         }
         
@@ -532,9 +532,11 @@
         }
         
         .form-group textarea {
-            height: 200px;
+            height: 400px;
             resize: vertical;
             font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
         }
         
         .btn {
@@ -559,7 +561,7 @@
         }
         
         /* 响应式设计 */
-        @media (max-width: 1200px) {
+        @media (max-width: 1400px) {
             .sidebar {
                 display: none;
             }
@@ -567,6 +569,7 @@
             .main-content {
                 margin-left: 20px;
                 margin-right: 80px;
+                width: calc(100% - 100px);
             }
         }
         
@@ -574,6 +577,7 @@
             .main-content {
                 margin-left: 10px;
                 margin-right: 10px;
+                width: calc(100% - 20px);
             }
             
             .toolbar {
@@ -582,6 +586,11 @@
             
             .container {
                 padding: 10px;
+            }
+            
+            .modal-content {
+                width: 98%;
+                padding: 1.5rem;
             }
         }
         
@@ -853,7 +862,9 @@ function example() {
                     loginBtn.style.background = 'rgba(46, 204, 113, 0.3)';
                     writePostLink.style.display = 'block';
                     addPostBtn.style.display = 'block';
-                    alert('登录成功！现在可以写新文章了。');
+                    // 重新渲染页面以显示编辑/删除按钮
+                    renderPosts();
+                    alert('登录成功！现在可以写新文章和编辑现有文章了。');
                 } else if (password !== null) {
                     alert('密码错误！');
                 }
@@ -863,6 +874,8 @@ function example() {
                 loginBtn.style.background = 'rgba(255, 255, 255, 0.2)';
                 writePostLink.style.display = 'none';
                 addPostBtn.style.display = 'none';
+                // 重新渲染页面以隐藏编辑/删除按钮
+                renderPosts();
                 alert('已退出登录。');
             }
         }
