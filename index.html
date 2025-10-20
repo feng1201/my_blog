@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>博客首页</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="config.js" defer></script>
+    <script src="scripts/utils.js" defer></script>
+    <script src="scripts/dataSource.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <h1 id="site-title">我的博客</h1>
+      <p id="site-subtitle" class="subtitle">用文字记录，向知识致敬</p>
+    </header>
+
+    <nav class="tabs">
+      <button id="tab-knowledge" class="tab active" data-type="knowledge">知识分享</button>
+      <button id="tab-life" class="tab" data-type="life">生活记录</button>
+    </nav>
+
+    <main class="container">
+      <section id="list-section">
+        <div id="loading" class="loading">正在加载文章列表…</div>
+        <ul id="post-list" class="post-list" aria-live="polite"></ul>
+        <div id="empty" class="empty" hidden>暂无文章</div>
+        <div id="error" class="error" hidden>加载失败，请稍后重试。</div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>© <span id="year"></span> <span id="owner"></span>. 由 GitHub Pages 驱动</span>
+    </footer>
+  </body>
+</html>
+
+

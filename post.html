@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>文章 - 我的博客</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="config.js" defer></script>
+    <script src="scripts/utils.js" defer></script>
+    <script src="scripts/dataSource.js" defer></script>
+    <script src="scripts/post.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="./" class="back">← 返回首页</a>
+      <h1 id="post-title">加载中…</h1>
+      <p id="post-meta" class="subtitle"></p>
+    </header>
+
+    <main class="container">
+      <article id="post-content" class="post-content">
+        <div id="loading" class="loading">正在加载文章…</div>
+        <div id="error" class="error" hidden>加载失败，请稍后重试。</div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© <span id="year"></span> <span id="owner"></span></span>
+    </footer>
+  </body>
+</html>
+
+
