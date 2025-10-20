@@ -6,8 +6,8 @@ window.BLOG_CONFIG = {
   branch: 'main',
 
   // 站点信息
-  siteTitle: '我的博客',
-  siteSubtitle: '用文字记录，向知识致敬',
+  siteTitle: '冯宁辉的赛博史记',
+  siteSubtitle: '记录读过的文献和日常碎碎念',
   ownerName: 'feng1201',
 
   // 数据源模式：'github' | 'local'
