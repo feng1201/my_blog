@@ -28,14 +28,14 @@ tags: [文章阅读, 扩散语言模型, MoE]
 # LLaDA-MoE: A Sparse MoE Diffusion Language Model
 
 这篇文章是 25 年 9 月份的文章，作者人数也达到了 20+。这篇文章尝试将 **混合专家模型（MoE）** 引入扩散语言模型，而且效果看起来也不错，仅仅使用 1B 激活参数就超越了先前 8B 的 LLaDA 模型。
+![LLaDA方法](https://raw.githubusercontent.com/feng1201/my_blog/main/images/LLaDA_moe_method.png)
 
-![MoE方法](../../images/LLaDA_moe_method.png)
 
 同时他们的 MoE 实现方法也并不复杂。首先使用一个线性网络从隐状态输出各个专家模型的 logit，然后采用 top‑k 门控 MoE 层启用专家。并将专家的输出通过 softmax 加权求和。同时，为了缓解负载不均衡问题，作者引入了一个辅助损失，尽量使得专家被使用的频率比较相似。实现上就是对被使用概率比较高且分配 token 多的专家施加约束，尽量拉平各个专家的负载，尽量多地利用专家模型的参数。
 
 这篇文章读起来，感觉是将已有的 MoE 做法移植到了 MDM 范式上，跑通实验和训练流程证明其有效性（虽然实验显示依然比不上 Qwen2.5-3B-Base）。不过值得一提的是，这篇文章的 MoE 训练流程非常复杂，可能是由于 MDM 本身就难以稳定训练再加上 MoE 路由（笑，emmm 难上加难）。这里放个图感受一下训练流程的复杂性。
-![MoE训练](../../images/LLaDA_moe_training.png)
-
+![LLaDA方法](https://raw.githubusercontent.com/feng1201/my_blog/main/images/LLaDA_moe_training.png)
 后面我把实验的结果放一下。
-![MoE结果](../../images/LLaDA_moe_result.png)
+![LLaDA方法](https://raw.githubusercontent.com/feng1201/my_blog/main/images/LLaDA_moe_result.png)
+
 
